@@ -1,6 +1,7 @@
 package nl.yschuurmans.MessageServer.kafka.receiver;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import nl.yschuurmans.MessageServer.Logic.MessageProcessor;
 import nl.yschuurmans.MessageServer.domain.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,14 +17,16 @@ public class KafkaReceiver {
 
     private static final Logger LOG = LoggerFactory.getLogger(KafkaReceiver.class);
 
+@Autowired
+    MessageProcessor processor;
 
     @KafkaListener(topics = "${app.topic.servermessage}")
     public void listen(@Payload String payload) {
 
         try {
             Envelope envelope = new ObjectMapper().readValue(payload, Envelope.class);
-
             LOG.info("received message='{}' for target='{}'", envelope.getMessage(), envelope.getTarget());
+            processor.ProcessEnvelope(envelope);
 
         } catch (IOException e) {
             e.printStackTrace();

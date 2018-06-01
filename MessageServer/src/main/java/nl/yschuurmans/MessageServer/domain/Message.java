@@ -1,16 +1,22 @@
 package nl.yschuurmans.MessageServer.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Message {
     private String messageId;
-    private String message;
+    private String messageContent;
     private String target;
     private String sender;
 
+    public Message() {
+    }
 
     public Message(String messageId, String target, String message) {
         this.messageId = messageId;
         this.target = target;
-        this.message = message;
+        this.messageContent = message;
     }
 
     public String getTarget() {
@@ -37,11 +43,11 @@ public class Message {
         this.sender = sender;
     }
 
-    public String getMessage() {
-        return message;
+    public String getMessageContent() {
+        return messageContent;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setMessageContent(String messageContent) {
+        this.messageContent = messageContent;
     }
 }

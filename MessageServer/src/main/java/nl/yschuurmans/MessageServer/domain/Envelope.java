@@ -14,6 +14,11 @@ public class Envelope {
         this.message = message;
     }
 
+    public Envelope(String target, String message) {
+        this.target = target;
+        this.message = message;
+    }
+
     public String getSender() {
         return sender;
     }
