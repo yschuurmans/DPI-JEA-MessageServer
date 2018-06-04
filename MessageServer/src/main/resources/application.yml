@@ -4,6 +4,13 @@ server:
 spring:
     kafka:
         bootstrap-servers: 192.168.99.100:9092
+    jpa:
+      hibernate:
+        ddl-auto: update
+    datasource:
+      username: dbuser
+      password: dbpass
+      url: jdbc:mysql://localhost:3306/db
 
 app:
   topic:
