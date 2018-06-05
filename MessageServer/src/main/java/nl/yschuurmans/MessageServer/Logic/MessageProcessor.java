@@ -8,7 +8,9 @@ import nl.yschuurmans.MessageServer.domain.Message;
 import nl.yschuurmans.MessageServer.domain.MessageContent;
 import nl.yschuurmans.MessageServer.kafka.sender.KafkaSender;
 import nl.yschuurmans.MessageServer.repositories.ConfirmMessageRepo;
+import nl.yschuurmans.MessageServer.repositories.MessageRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +32,8 @@ public class MessageProcessor {
 
     @Autowired
     ConfirmMessageRepo confirmMessageRepo;
+    @Autowired
+    MessageRepo messageRepo;
 
     public void ProcessEnvelope(Envelope envelope) {
         try {
@@ -37,7 +41,7 @@ public class MessageProcessor {
             Message message = openEnvelope(envelope);
 
             if (message.getMessageContent().equals("confirm")) {
-                HandleConfirmMessage(message);
+                HandleConfirmMessage(envelope ,message);
                 return;
             }
 
@@ -66,9 +70,9 @@ public class MessageProcessor {
         return mapper.writeValueAsString(returnEnvelope);
     }
 
-    private void HandleConfirmMessage(Message confirmMessage) {
-        LOGGER.log(Level.INFO, "Received Confirm message for: " + confirmMessage.getMessageId());
-        removeMessageConfirmation(confirmMessage);
+    private void HandleConfirmMessage(Envelope envelope, Message message) {
+        LOGGER.log(Level.INFO, "Received Confirm message for: " + message.getMessageId());
+        removeMessageConfirmation(envelope, message);
     }
 
     @Scheduled(fixedDelay = 5000)
@@ -81,6 +85,7 @@ public class MessageProcessor {
             if (System.currentTimeMillis() - confirmMessage.getLastUpdateTime() > 4900) {
                 toCheck.add(confirmMessage);
                 confirmMessage.setUpdateReserve(operationGuid);
+                confirmMessage.setLastUpdateTime(System.currentTimeMillis());
                 toCheckIds.add(confirmMessage.getId());
             }
         }
@@ -102,24 +107,37 @@ public class MessageProcessor {
             }
         }
 
+        for (ConfirmMessage confirmMessage : confirmMessages) {
+            if (System.currentTimeMillis() - confirmMessage.getSendTime() > 60000) {
+                confirmMessageRepo.delete(confirmMessage);
+                messageRepo.flush();
+                confirmMessageRepo.flush();
+            }
+        }
+
     }
 
     public void awaitMessageConfirmation(Message message) {
         ConfirmMessage confirmMessage =
                 new ConfirmMessage(message.getMessageId(), message.getTarget(), message);
+        messageRepo.save(message);
         confirmMessageRepo.save(confirmMessage);
+        messageRepo.flush();
+        confirmMessageRepo.flush();
     }
 
-    public void removeMessageConfirmation(Message message) {
+    public void removeMessageConfirmation(Envelope envelope, Message message) {
         Iterable<ConfirmMessage> confirmMessages = confirmMessageRepo.findAll();
-        long toRemoveMessage = 0;
+        ConfirmMessage toRemoveMessage = null;
         for (ConfirmMessage confirmMessage : confirmMessages) {
             if (confirmMessage.getMessageGuid().equals(message.getMessageId()) &&
-                    confirmMessage.getSender().equals(message.getSender())) {
-                toRemoveMessage = confirmMessage.getId();
+                    confirmMessage.getSender().equals(envelope.getSender())) {
+                toRemoveMessage = confirmMessage;
             }
         }
-        confirmMessageRepo.deleteById(toRemoveMessage);
+        if(toRemoveMessage != null) {
+            confirmMessageRepo.deleteById(toRemoveMessage.getId());
+        }
     }
 
     private void SendMessageConfirmation(Message msg) {

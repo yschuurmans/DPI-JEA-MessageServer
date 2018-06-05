@@ -1,10 +1,21 @@
 package nl.yschuurmans.MessageServer.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 
+@Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Message {
+    @Id
+    @GeneratedValue(strategy= GenerationType.AUTO)
+    @JsonIgnore
+    private Long id;
+
     private String messageId;
     private String messageContent;
     private String target;
@@ -17,6 +28,14 @@ public class Message {
         this.messageId = messageId;
         this.target = target;
         this.messageContent = message;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getTarget() {

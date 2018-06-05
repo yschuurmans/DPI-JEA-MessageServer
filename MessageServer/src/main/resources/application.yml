@@ -10,7 +10,7 @@ spring:
     datasource:
       username: dbuser
       password: dbpass
-      url: jdbc:mysql://localhost:3306/db
+      url: jdbc:mysql://192.168.99.100:3306/db?useSSL=false
 
 app:
   topic:

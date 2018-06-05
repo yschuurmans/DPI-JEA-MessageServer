@@ -1,9 +1,6 @@
 package nl.yschuurmans.MessageServer.domain;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Entity
 public class ConfirmMessage {
@@ -12,9 +9,11 @@ public class ConfirmMessage {
     private Long id;
     private String messageGuid;
     private String sender;
+    @OneToOne(orphanRemoval=true)
     private Message message;
     private long lastUpdateTime;
     private String updateReserve;
+    private long sendTime;
 
     public ConfirmMessage() {
     }
@@ -25,6 +24,7 @@ public class ConfirmMessage {
         this.sender = sender;
         this.lastUpdateTime = System.currentTimeMillis();
         this.updateReserve = "";
+        this.sendTime = System.currentTimeMillis();
     }
 
     public Long getId() {
@@ -73,5 +73,13 @@ public class ConfirmMessage {
 
     public void setUpdateReserve(String updateReserve) {
         this.updateReserve = updateReserve;
+    }
+
+    public long getSendTime() {
+        return sendTime;
+    }
+
+    public void setSendTime(long sendTime) {
+        this.sendTime = sendTime;
     }
 }
